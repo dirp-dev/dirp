@@ -1,0 +1,76 @@
+use std::path::PathBuf;
+
+use clap::{Parser, Subcommand};
+use dirp::{
+    all_predicates, export_metadata, print_results, resolve_execution_order, run_predicates,
+    ScanContext,
+};
+
+#[derive(Parser)]
+#[command(
+    name = "dirp",
+    about = "Directory Predicates — check if a directory satisfies defined predicates"
+)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Check one or more directory predicates against the current working directory
+    Check {
+        /// Predicate IDs to check (e.g. dp-1 dp-2 dp-3)
+        ids: Vec<String>,
+    },
+    /// Export all predicate metadata as JSON
+    Export,
+}
+
+fn parse_dp_id(s: &str) -> Result<u32, String> {
+    s.strip_prefix("dp-")
+        .ok_or_else(|| format!("invalid predicate ID format: {s:?} (expected dp-N)"))?
+        .parse::<u32>()
+        .map_err(|e| format!("invalid predicate ID: {s:?}: {e}"))
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::Check { ids } => {
+            if ids.is_empty() {
+                eprintln!("error: no predicate IDs provided");
+                std::process::exit(1);
+            }
+
+            let target_ids: Vec<u32> = ids
+                .iter()
+                .map(|s| {
+                    parse_dp_id(s).unwrap_or_else(|e| {
+                        eprintln!("error: {e}");
+                        std::process::exit(1);
+                    })
+                })
+                .collect();
+
+            let predicates = all_predicates();
+            let order = resolve_execution_order(&target_ids, &predicates).unwrap_or_else(|e| {
+                eprintln!("error: {e}");
+                std::process::exit(1);
+            });
+
+            let ctx = ScanContext {
+                path: PathBuf::from("."),
+            };
+
+            let results = run_predicates(&order, &predicates, &ctx);
+            print_results(&target_ids, &results, &predicates);
+        }
+        Commands::Export => {
+            let metas = export_metadata();
+            let json = serde_json::to_string_pretty(&metas).unwrap();
+            println!("{json}");
+        }
+    }
+}

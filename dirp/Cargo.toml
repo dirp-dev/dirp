@@ -1,0 +1,11 @@
+[package]
+name = "dirp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dirp-macro = { path = "../dirp-macro" }
+inventory = "0.3"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

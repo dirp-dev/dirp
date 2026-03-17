@@ -1,0 +1,3 @@
+[workspace]
+members = ["dirp", "dirp-macro"]
+resolver = "2"
