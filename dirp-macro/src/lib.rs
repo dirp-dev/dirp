@@ -65,7 +65,7 @@ struct DpArgs {
 
 impl Parse for DpArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let mut id = 0u32;
+        let mut id: Option<u32> = None;
         let mut after = Vec::new();
         let mut lite = false;
         let mut deprecated = false;
@@ -73,12 +73,14 @@ impl Parse for DpArgs {
         let fields = Punctuated::<DpField, Token![,]>::parse_terminated(input)?;
         for field in fields {
             match field {
-                DpField::Id(v) => id = v,
+                DpField::Id(v) => id = Some(v),
                 DpField::After(v) => after = v,
                 DpField::Lite(v) => lite = v,
                 DpField::Deprecated(v) => deprecated = v,
             }
         }
+
+        let id = id.ok_or_else(|| input.error("missing required attribute: id"))?;
 
         Ok(DpArgs {
             id,

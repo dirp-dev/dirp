@@ -20,7 +20,7 @@ struct Cli {
 enum Commands {
     /// Check one or more directory predicates against the current working directory
     Check {
-        /// Predicate IDs to check (e.g. dp-1 dp-2 dp-3)
+        /// Predicate IDs to check (e.g. dp-1000 dp-1001 dp-1002)
         ids: Vec<String>,
     },
     /// Export all predicate metadata as JSON
