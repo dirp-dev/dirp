@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use crate::{DpContext, DpResult};
 use dirp_macro::dp;
+use std::collections::HashMap;
 
 #[dp(id = 1000, lite = true)]
 /// Directory contains a Cargo.toml file, indicating a Rust project

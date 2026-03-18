@@ -72,6 +72,7 @@ cargo build --release
 ```bash
 # Format code
 cargo fmt
+rustfmt --edition 2021 dirp/src/dp/dp_*.rs
 
 # Run lints
 cargo clippy
