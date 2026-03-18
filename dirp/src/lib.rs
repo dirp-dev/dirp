@@ -38,8 +38,7 @@ impl From<(bool, String)> for DpOutcome {
 }
 
 pub type DpResult = Result<DpOutcome, String>;
-pub type DpResults = HashMap<u32, DpResult>;
-pub type CheckFn = fn(&DpContext, &DpResults) -> DpResult;
+pub type CheckFn = fn(&DpContext, &HashMap<u32, DpResult>) -> DpResult;
 
 pub struct Predicate {
     pub id: u32,
@@ -171,8 +170,8 @@ pub fn run_predicates(
     order: &[u32],
     predicates: &HashMap<u32, &Predicate>,
     dp_ctx: &DpContext,
-) -> DpResults {
-    let mut results = DpResults::new();
+) -> HashMap<u32, DpResult> {
+    let mut results: HashMap<u32, DpResult> = HashMap::new();
 
     for &id in order {
         let pred = predicates[&id];
@@ -185,7 +184,7 @@ pub fn run_predicates(
 
 pub fn print_results(
     target_ids: &[u32],
-    results: &DpResults,
+    results: &HashMap<u32, DpResult>,
     predicates: &HashMap<u32, &Predicate>,
 ) {
     for &id in target_ids {

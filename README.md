@@ -18,11 +18,11 @@ Each predicate is a single file in `dirp/src/dp/` (e.g. `dp_1000_has_cargo_toml.
 
 ```rust
 use dirp_macro::dp;
-use crate::{DpContext, DpResult, DpResults};
+use crate::{DpContext, DpResult, HashMap<u32, DpResult>};
 
 #[dp(id = 1000, lite = true)]
 /// Directory contains a Cargo.toml file
-fn has_cargo_toml(ctx: &DpContext, _prior: &DpResults) -> DpResult {
+fn has_cargo_toml(ctx: &DpContext, _prior: &HashMap<u32, DpResult>) -> DpResult {
     Ok(ctx.path.join("Cargo.toml").exists().into())
 }
 ```
@@ -45,12 +45,12 @@ The function name serves as the predicate name, and `///` doc comments (supports
 
 ### Dependencies
 
-Use `after` to declare dependencies. They are resolved via topological sort (cycles are an error), and results are available in the `prior: &DpResults` parameter:
+Use `after` to declare dependencies. They are resolved via topological sort (cycles are an error), and results are available in the `prior: &HashMap<u32, DpResult>` parameter:
 
 ```rust
 #[dp(id = 10000, after = [1000], lite = false)]
 /// A Rust workspace
-fn rust_workspace(ctx: &DpContext, prior: &DpResults) -> DpResult {
+fn rust_workspace(ctx: &DpContext, prior: &HashMap<u32, DpResult>) -> DpResult {
     match prior.get(&1000) {
         Some(Ok(outcome)) if !outcome.verdict => return Ok((false, "no Cargo.toml").into()),
         Some(Err(e)) => return Err(format!("dependency dp-1000 failed: {e}")),
@@ -77,7 +77,7 @@ cargo fmt
 cargo clippy
 
 # Quick test run against this repo
-cargo run -- check dp-1000 dp-1001 dp-1002
+cargo run -- check dp-1000 dp-1001 dp-1002 dp-1003
 
 # Export metadata
 cargo run -- export
