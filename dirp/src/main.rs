@@ -3,13 +3,13 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use dirp::{
     all_predicates, export_metadata, print_results, resolve_execution_order, run_predicates,
-    ScanContext,
+    DpContext,
 };
 
 #[derive(Parser)]
 #[command(
     name = "dirp",
-    about = "Directory Predicates — check if a directory satisfies defined predicates"
+    about = "Directory Predicates — check if a directory satisfies directory predicates"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -60,7 +60,7 @@ fn main() {
                 std::process::exit(1);
             });
 
-            let ctx = ScanContext {
+            let ctx = DpContext {
                 path: PathBuf::from("."),
             };
 

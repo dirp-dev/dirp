@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 
-pub type CheckFn = fn(&ScanContext, &DpResults) -> bool;
+pub type CheckFn = fn(&DpContext, &DpResults) -> Result<bool, String>;
 
 pub struct Predicate {
     pub id: u32,
@@ -19,11 +19,11 @@ pub struct Predicate {
 
 inventory::collect!(Predicate);
 
-pub struct ScanContext {
+pub struct DpContext {
     pub path: PathBuf,
 }
 
-pub type DpResults = HashMap<u32, bool>;
+pub type DpResults = HashMap<u32, Result<bool, String>>;
 
 #[derive(Serialize)]
 pub struct PredicateMeta {
@@ -138,20 +138,19 @@ pub fn resolve_execution_order(
 pub fn run_predicates(
     order: &[u32],
     predicates: &HashMap<u32, &Predicate>,
-    scan_ctx: &ScanContext,
+    dp_ctx: &DpContext,
 ) -> DpResults {
     let mut results = DpResults::new();
 
     for &id in order {
         let pred = predicates[&id];
-        // Build the prior results that this predicate requested
         let mut prior = DpResults::new();
         for &dep_id in pred.after {
-            if let Some(&result) = results.get(&dep_id) {
-                prior.insert(dep_id, result);
+            if let Some(result) = results.get(&dep_id) {
+                prior.insert(dep_id, result.clone());
             }
         }
-        let result = (pred.check_fn)(scan_ctx, &prior);
+        let result = (pred.check_fn)(dp_ctx, &prior);
         results.insert(id, result);
     }
 
@@ -165,8 +164,15 @@ pub fn print_results(
 ) {
     for &id in target_ids {
         let pred = predicates[&id];
-        let result = results[&id];
-        let status = if result { "PASS" } else { "FAIL" };
+        let result = &results[&id];
+        let status = match result {
+            Ok(true) => "PASS",
+            Ok(false) => "FAIL",
+            Err(_) => "ERROR",
+        };
         println!("dp-{id} ({}) ... {status}", pred.name);
+        if let Err(e) = result {
+            println!("  error: {e}");
+        }
     }
 }
