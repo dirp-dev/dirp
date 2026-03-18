@@ -35,7 +35,10 @@ pub fn dp(attr: TokenStream, item: TokenStream) -> TokenStream {
     let id = args.id;
     let after = &args.after;
     let lite = args.lite;
-    let deprecated = args.deprecated;
+    let deprecated = match args.deprecated {
+        Some(v) => quote! { Some(#v) },
+        None => quote! { None },
+    };
 
     let expanded = quote! {
         #input
@@ -60,7 +63,7 @@ struct DpArgs {
     id: u32,
     after: Vec<u32>,
     lite: bool,
-    deprecated: bool,
+    deprecated: Option<u32>,
 }
 
 impl Parse for DpArgs {
@@ -68,7 +71,7 @@ impl Parse for DpArgs {
         let mut id: Option<u32> = None;
         let mut after = Vec::new();
         let mut lite = false;
-        let mut deprecated = false;
+        let mut deprecated: Option<u32> = None;
 
         let fields = Punctuated::<DpField, Token![,]>::parse_terminated(input)?;
         for field in fields {
@@ -76,7 +79,7 @@ impl Parse for DpArgs {
                 DpField::Id(v) => id = Some(v),
                 DpField::After(v) => after = v,
                 DpField::Lite(v) => lite = v,
-                DpField::Deprecated(v) => deprecated = v,
+                DpField::Deprecated(v) => deprecated = Some(v),
             }
         }
 
@@ -95,7 +98,7 @@ enum DpField {
     Id(u32),
     After(Vec<u32>),
     Lite(bool),
-    Deprecated(bool),
+    Deprecated(u32),
 }
 
 impl Parse for DpField {
@@ -121,8 +124,8 @@ impl Parse for DpField {
                 Ok(DpField::Lite(lit.value))
             }
             "deprecated" => {
-                let lit: LitBool = input.parse()?;
-                Ok(DpField::Deprecated(lit.value))
+                let lit: LitInt = input.parse()?;
+                Ok(DpField::Deprecated(lit.base10_parse()?))
             }
             other => Err(syn::Error::new(
                 ident.span(),

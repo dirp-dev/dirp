@@ -47,7 +47,7 @@ pub struct Predicate {
     pub description: &'static str,
     pub after: &'static [u32],
     pub lite: bool,
-    pub deprecated: bool,
+    pub deprecated: Option<u32>,
     pub check_fn: CheckFn,
 }
 
@@ -64,7 +64,7 @@ pub struct PredicateMeta {
     pub description: String,
     pub after: Vec<u32>,
     pub lite: bool,
-    pub deprecated: bool,
+    pub deprecated: Option<u32>,
 }
 
 pub fn all_predicates() -> HashMap<u32, &'static Predicate> {
@@ -197,6 +197,9 @@ pub fn print_results(
                 print!("dp-{id} ({}) ... {status}", pred.name);
                 if let Some(reason) = &outcome.reason {
                     print!(" — {reason}");
+                }
+                if let Some(new_id) = pred.deprecated {
+                    print!(" (DEPRECATED: use dp-{new_id})");
                 }
                 println!();
             }

@@ -39,7 +39,7 @@ The return type is `DpResult` (`Result<DpOutcome, String>`). Use `.into()` to co
 | `id`         | —       | Unique integer ID, starting from 1000 (0-999 reserved). Required. |
 | `after`      | `[]`    | List of DP IDs to run first; their results are passed via `prior` |
 | `lite`       | `false` | Lightweight predicate flag                                        |
-| `deprecated` | `false` | Marks the predicate as deprecated                                 |
+| `deprecated` | `None`  | ID of the replacement predicate (marks this one as deprecated)    |
 
 The function name serves as the predicate name, and `///` doc comments (supports markdown) become the description. Both names and IDs must be unique — duplicates cause a compile error.
 
@@ -48,7 +48,7 @@ The function name serves as the predicate name, and `///` doc comments (supports
 Use `after` to declare dependencies. They are resolved via topological sort (cycles are an error), and results are available in the `prior: &DpResults` parameter:
 
 ```rust
-#[dp(id = 10000, after = [1000], lite = false, deprecated = false)]
+#[dp(id = 10000, after = [1000], lite = false)]
 /// A Rust workspace
 fn rust_workspace(ctx: &DpContext, prior: &DpResults) -> DpResult {
     match prior.get(&1000) {
