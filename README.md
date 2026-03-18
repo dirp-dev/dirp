@@ -18,14 +18,19 @@ Each predicate is a single file in `dirp/src/dp/` (e.g. `dp_1000_has_cargo_toml.
 
 ```rust
 use dirp_macro::dp;
-use crate::{DpResults, DpContext};
+use crate::{DpContext, DpResult, DpResults};
 
 #[dp(id = 1000, lite = true)]
 /// Directory contains a Cargo.toml file
-fn has_cargo_toml(ctx: &DpContext, _prior: &DpResults) -> Result<bool, String> {
-    Ok(ctx.path.join("Cargo.toml").exists())
+fn has_cargo_toml(ctx: &DpContext, _prior: &DpResults) -> DpResult {
+    Ok(ctx.path.join("Cargo.toml").exists().into())
 }
 ```
+
+The return type is `DpResult` (`Result<DpOutcome, String>`). Use `.into()` to convert:
+- `Ok(true.into())` / `Ok(false.into())` — verdict without reason
+- `Ok((false, "missing field").into())` — verdict with reason
+- `Err("failed to read file".into())` — error
 
 ### Attributes
 
@@ -45,12 +50,14 @@ Use `after` to declare dependencies. They are resolved via topological sort (cyc
 ```rust
 #[dp(id = 10000, after = [1000], lite = false, deprecated = false)]
 /// A Rust workspace
-fn rust_workspace(ctx: &DpContext, prior: &DpResults) -> Result<bool, String> {
-    if prior.get(&1000) != Some(&Ok(true)) {
-        return Ok(false);
+fn rust_workspace(ctx: &DpContext, prior: &DpResults) -> DpResult {
+    match prior.get(&1000) {
+        Some(Ok(outcome)) if !outcome.verdict => return Ok((false, "no Cargo.toml").into()),
+        Some(Err(e)) => return Err(format!("dependency dp-1000 failed: {e}")),
+        _ => {}
     }
     // ...
-    Ok(true)
+    Ok(true.into())
 }
 ```
 

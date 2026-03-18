@@ -5,7 +5,41 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 
-pub type CheckFn = fn(&DpContext, &DpResults) -> Result<bool, String>;
+pub struct DpOutcome {
+    pub verdict: bool,
+    pub reason: Option<String>,
+}
+
+impl From<bool> for DpOutcome {
+    fn from(v: bool) -> Self {
+        DpOutcome {
+            verdict: v,
+            reason: None,
+        }
+    }
+}
+
+impl From<(bool, &str)> for DpOutcome {
+    fn from((v, r): (bool, &str)) -> Self {
+        DpOutcome {
+            verdict: v,
+            reason: Some(r.to_string()),
+        }
+    }
+}
+
+impl From<(bool, String)> for DpOutcome {
+    fn from((v, r): (bool, String)) -> Self {
+        DpOutcome {
+            verdict: v,
+            reason: Some(r),
+        }
+    }
+}
+
+pub type DpResult = Result<DpOutcome, String>;
+pub type DpResults = HashMap<u32, DpResult>;
+pub type CheckFn = fn(&DpContext, &DpResults) -> DpResult;
 
 pub struct Predicate {
     pub id: u32,
@@ -22,8 +56,6 @@ inventory::collect!(Predicate);
 pub struct DpContext {
     pub path: PathBuf,
 }
-
-pub type DpResults = HashMap<u32, Result<bool, String>>;
 
 #[derive(Serialize)]
 pub struct PredicateMeta {
@@ -144,13 +176,7 @@ pub fn run_predicates(
 
     for &id in order {
         let pred = predicates[&id];
-        let mut prior = DpResults::new();
-        for &dep_id in pred.after {
-            if let Some(result) = results.get(&dep_id) {
-                prior.insert(dep_id, result.clone());
-            }
-        }
-        let result = (pred.check_fn)(dp_ctx, &prior);
+        let result = (pred.check_fn)(dp_ctx, &results);
         results.insert(id, result);
     }
 
@@ -165,14 +191,18 @@ pub fn print_results(
     for &id in target_ids {
         let pred = predicates[&id];
         let result = &results[&id];
-        let status = match result {
-            Ok(true) => "PASS",
-            Ok(false) => "FAIL",
-            Err(_) => "ERROR",
-        };
-        println!("dp-{id} ({}) ... {status}", pred.name);
-        if let Err(e) = result {
-            println!("  error: {e}");
+        match result {
+            Ok(outcome) => {
+                let status = if outcome.verdict { "PASS" } else { "FAIL" };
+                print!("dp-{id} ({}) ... {status}", pred.name);
+                if let Some(reason) = &outcome.reason {
+                    print!(" — {reason}");
+                }
+                println!();
+            }
+            Err(e) => {
+                println!("dp-{id} ({}) ... ERROR — {e}", pred.name);
+            }
         }
     }
 }
