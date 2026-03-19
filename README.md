@@ -78,7 +78,7 @@ rustfmt --edition 2021 dirp/src/dp/dp_*.rs
 cargo clippy
 
 # Quick test run against this repo
-cargo run -- check dp-1000 dp-1001 dp-1002 dp-1003
+cargo run -- check dp-1000 dp-1001 dp-1002 dp-1003 dp-1004
 
 # Export metadata
 cargo run -- export
