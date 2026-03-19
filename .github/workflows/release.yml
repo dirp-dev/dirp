@@ -8,8 +8,23 @@ permissions:
   contents: write
 
 jobs:
+  check-version:
+    name: Check version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify tag matches Cargo.toml version
+        run: |
+          cargo_version="v$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == "dirp") | .version')"
+          tag="${{ github.event.release.tag_name }}"
+          if [ "$cargo_version" != "$tag" ]; then
+            echo "::error::Tag $tag does not match Cargo.toml version $cargo_version"
+            exit 1
+          fi
+
   build:
     name: Build ${{ matrix.target }}
+    needs: check-version
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

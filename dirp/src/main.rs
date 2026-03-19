@@ -9,6 +9,7 @@ use dirp::{
 #[derive(Parser)]
 #[command(
     name = "dirp",
+    version,
     about = "Directory Predicates — check if a directory satisfies directory predicates"
 )]
 struct Cli {
