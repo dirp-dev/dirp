@@ -66,7 +66,7 @@ fn main() {
         .iter()
         .map(|m| {
             let path = abs_dp_dir.join(format!("{m}.rs"));
-            let path = path.display();
+            let path = path.display().to_string().replace('\\', "/");
             format!("#[path = \"{path}\"]\nmod {m};\n")
         })
         .collect();
