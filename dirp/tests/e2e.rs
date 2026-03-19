@@ -233,6 +233,7 @@ fn export_contains_all_predicates() {
     assert!(ids.contains(&1001));
     assert!(ids.contains(&1002));
     assert!(ids.contains(&1003));
+    assert!(ids.contains(&1004));
 }
 
 #[test]

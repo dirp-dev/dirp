@@ -18,7 +18,8 @@ Each predicate is a single file in `dirp/src/dp/` (e.g. `dp_1000_has_cargo_toml.
 
 ```rust
 use dirp_macro::dp;
-use crate::{DpContext, DpResult, HashMap<u32, DpResult>};
+use crate::{DpContext, DpResult};
+use std::collections::HashMap;
 
 #[dp(id = 1000, lite = true)]
 /// Directory contains a Cargo.toml file
