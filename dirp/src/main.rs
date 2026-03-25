@@ -23,11 +23,9 @@ enum Commands {
     Check {
         /// Predicate IDs to check (e.g. dp-1000 dp-1001 dp-1002)
         ids: Vec<String>,
-
-        /// Run all lite predicates
-        #[arg(long)]
-        lite: bool,
     },
+    /// Run all lite predicates against the current working directory
+    Analyze,
     /// Export all predicate metadata as JSON
     Export,
 }
@@ -43,31 +41,43 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Check { ids, lite } => {
-            let predicates = all_predicates();
+        Commands::Check { ids } => {
+            if ids.is_empty() {
+                eprintln!("error: no predicate IDs provided");
+                std::process::exit(1);
+            }
 
-            let target_ids: Vec<u32> = if lite {
-                let mut lite_ids: Vec<u32> = predicates
-                    .values()
-                    .filter(|p| p.lite)
-                    .map(|p| p.id)
-                    .collect();
-                lite_ids.sort();
-                lite_ids
-            } else {
-                if ids.is_empty() {
-                    eprintln!("error: no predicate IDs provided");
-                    std::process::exit(1);
-                }
-                ids.iter()
-                    .map(|s| {
-                        parse_dp_id(s).unwrap_or_else(|e| {
-                            eprintln!("error: {e}");
-                            std::process::exit(1);
-                        })
+            let predicates = all_predicates();
+            let target_ids: Vec<u32> = ids
+                .iter()
+                .map(|s| {
+                    parse_dp_id(s).unwrap_or_else(|e| {
+                        eprintln!("error: {e}");
+                        std::process::exit(1);
                     })
-                    .collect()
+                })
+                .collect();
+
+            let order = resolve_execution_order(&target_ids, &predicates).unwrap_or_else(|e| {
+                eprintln!("error: {e}");
+                std::process::exit(1);
+            });
+
+            let ctx = DpContext {
+                path: PathBuf::from("."),
             };
+
+            let results = run_predicates(&order, &predicates, &ctx);
+            print_results(&target_ids, &results, &predicates);
+        }
+        Commands::Analyze => {
+            let predicates = all_predicates();
+            let mut target_ids: Vec<u32> = predicates
+                .values()
+                .filter(|p| p.lite)
+                .map(|p| p.id)
+                .collect();
+            target_ids.sort();
 
             let order = resolve_execution_order(&target_ids, &predicates).unwrap_or_else(|e| {
                 eprintln!("error: {e}");

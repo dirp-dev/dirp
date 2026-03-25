@@ -44,7 +44,7 @@ cargo fmt
 rustfmt dirp/src/dp/dp_*.rs   # fmt doesn't auto-discover dp files
 cargo clippy
 cargo run -- check dp-1000 dp-1001 dp-1002 dp-1003 dp-1004
-cargo run -- check --lite   # run all lite predicates
+cargo run -- analyze   # run all lite predicates
 cargo run -- export
 ```
 

@@ -9,7 +9,7 @@ A CLI tool that checks whether a directory satisfies directory predicates (DPs).
 dirp check dp-1000 dp-1001 dp-1002
 
 # Run all lite predicates
-dirp check --lite
+dirp analyze
 
 # Export all predicate metadata as JSON
 dirp export
@@ -85,7 +85,7 @@ cargo clippy
 cargo run -- check dp-1000 dp-1001 dp-1002 dp-1003 dp-1004
 
 # Run all lite predicates
-cargo run -- check --lite
+cargo run -- analyze
 
 # Export metadata
 cargo run -- export
