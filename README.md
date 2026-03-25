@@ -8,6 +8,9 @@ A CLI tool that checks whether a directory satisfies directory predicates (DPs).
 # Check specific predicates against the current directory
 dirp check dp-1000 dp-1001 dp-1002
 
+# Run all lite predicates
+dirp check --lite
+
 # Export all predicate metadata as JSON
 dirp export
 ```
@@ -73,13 +76,16 @@ cargo build --release
 ```bash
 # Format code
 cargo fmt
-rustfmt --edition 2021 dirp/src/dp/dp_*.rs
+rustfmt dirp/src/dp/dp_*.rs
 
 # Run lints
 cargo clippy
 
 # Quick test run against this repo
 cargo run -- check dp-1000 dp-1001 dp-1002 dp-1003 dp-1004
+
+# Run all lite predicates
+cargo run -- check --lite
 
 # Export metadata
 cargo run -- export

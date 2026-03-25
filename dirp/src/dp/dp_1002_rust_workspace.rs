@@ -16,7 +16,7 @@ fn rust_workspace(ctx: &DpContext, prior: &HashMap<u32, DpResult>) -> DpResult {
         _ => {}
     }
     let cargo_toml = ctx.path.join("Cargo.toml");
-    let content = std::fs::read_to_string(&cargo_toml)
+    let content = std::fs::read_to_string(cargo_toml)
         .map_err(|e| format!("failed to read Cargo.toml: {e}"))?;
     Ok(content.contains("[workspace]").into())
 }

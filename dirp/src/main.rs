@@ -23,6 +23,10 @@ enum Commands {
     Check {
         /// Predicate IDs to check (e.g. dp-1000 dp-1001 dp-1002)
         ids: Vec<String>,
+
+        /// Run all lite predicates
+        #[arg(long)]
+        lite: bool,
     },
     /// Export all predicate metadata as JSON
     Export,
@@ -39,23 +43,32 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Check { ids } => {
-            if ids.is_empty() {
-                eprintln!("error: no predicate IDs provided");
-                std::process::exit(1);
-            }
-
-            let target_ids: Vec<u32> = ids
-                .iter()
-                .map(|s| {
-                    parse_dp_id(s).unwrap_or_else(|e| {
-                        eprintln!("error: {e}");
-                        std::process::exit(1);
-                    })
-                })
-                .collect();
-
+        Commands::Check { ids, lite } => {
             let predicates = all_predicates();
+
+            let target_ids: Vec<u32> = if lite {
+                let mut lite_ids: Vec<u32> = predicates
+                    .values()
+                    .filter(|p| p.lite)
+                    .map(|p| p.id)
+                    .collect();
+                lite_ids.sort();
+                lite_ids
+            } else {
+                if ids.is_empty() {
+                    eprintln!("error: no predicate IDs provided");
+                    std::process::exit(1);
+                }
+                ids.iter()
+                    .map(|s| {
+                        parse_dp_id(s).unwrap_or_else(|e| {
+                            eprintln!("error: {e}");
+                            std::process::exit(1);
+                        })
+                    })
+                    .collect()
+            };
+
             let order = resolve_execution_order(&target_ids, &predicates).unwrap_or_else(|e| {
                 eprintln!("error: {e}");
                 std::process::exit(1);
