@@ -65,6 +65,41 @@ fn rust_workspace(ctx: &DpContext, prior: &HashMap<u32, DpResult>) -> DpResult {
 }
 ```
 
+## Claude Code Integration
+
+dirp can run as a [Claude Code Stop hook](https://code.claude.com/docs/en/hooks) to automatically check predicates when Claude finishes responding. If any predicates fail, Claude is blocked from stopping and receives feedback to fix the issues.
+
+Add the following to your `.claude/settings.json` (project-level) or `~/.claude/settings.json` (user-level):
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dirp cc-hook dp-1000 dp-1001 dp-1002"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Replace the predicate IDs with the ones you want to enforce. When any of the specified predicates fail, Claude will see a message like:
+
+```
+The following directory predicates failed:
+
+- dp-1000 (has_cargo_toml): FAIL
+  Description: Directory contains a Cargo.toml file, indicating a Rust project
+
+0/1 predicates passed. Please fix the failing predicates before finishing.
+```
+
 ## Build
 
 ```bash
